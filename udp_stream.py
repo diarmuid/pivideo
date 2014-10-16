@@ -7,13 +7,13 @@ import socket
 import time
 import picamera
 import subprocess,io,os
-import time
+import datetime
+
 
 
 class ConversionOutput(object):
     def __init__(self, camera):
-        print('Spawning background conversion process')
-        self.converter = subprocess.Popen([
+        command_list = [
             'avconv',
             '-i', '-',
             '-fflags','igndts',
@@ -26,7 +26,11 @@ class ConversionOutput(object):
             '-mpegts_start_pid', '0x150',
             '-metadata','service_provider="Diarmuids Channel"',
             '-metadata', 'service_name="RaspberryLive"',
-            'udp://192.168.1.39:8010?pkt_size=1316'],
+            'udp://192.168.1.39:8010?pkt_size=1316']
+        print('Spawning background conversion process')
+        print "running {}".format(" ".join(command_list))
+
+        self.converter = subprocess.Popen(command_list,
             stdin=subprocess.PIPE,stderr=io.open(os.devnull, 'wb'),stdout=subprocess.PIPE,
             shell=False, close_fds=True)
 
@@ -44,7 +48,7 @@ class ConversionOutput(object):
 
 with picamera.PiCamera() as camera:
     camera.resolution = (1296, 972)
-    camera.framerate = 30
+    camera.framerate = 42
 
     # Accept a single connection and make a file-like object out of it
     connection = ConversionOutput(camera)
@@ -52,8 +56,9 @@ with picamera.PiCamera() as camera:
     camera.start_recording(connection, format='h264',profile='high')
     try:
         while True:
-            camera.wait_recording(0.1)
-            camera.annotate_text = "{}".format(time.strftime("%H:%M:%S", time.gmtime()))
+            camera.wait_recording(0.05)
+            current_time = datetime.datetime.now().strftime("%H:%M:%S.%f")
+            camera.annotate_text = "{}".format(current_time[:-4])
     finally:
         camera.stop_recording()
 
