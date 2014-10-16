@@ -11,9 +11,10 @@ import datetime
 
 
 
+
 class ConversionOutput(object):
     def __init__(self, camera):
-        command_list = [
+        standard_avconv_cmdline = [
             'avconv',
             '-i', '-',
             '-fflags','igndts',
@@ -25,8 +26,10 @@ class ConversionOutput(object):
             '-mpegts_pmt_start_pid', '0x1500',
             '-mpegts_start_pid', '0x150',
             '-metadata','service_provider="Diarmuids Channel"',
-            '-metadata', 'service_name="RaspberryLive"',
-            'udp://192.168.1.39:8010?pkt_size=1316']
+            '-metadata', 'service_name="RaspberryLive"']
+
+        command_list = standard_avconv_cmdline + ['udp://192.168.1.39:8010?pkt_size=1316']
+
         print('Spawning background conversion process')
         print "running {}".format(" ".join(command_list))
 
@@ -53,7 +56,7 @@ with picamera.PiCamera() as camera:
     # Accept a single connection and make a file-like object out of it
     connection = ConversionOutput(camera)
     #try:
-    camera.start_recording(connection, format='h264',profile='high')
+    camera.start_recording(connection, format='h264',profile='baseline')
     try:
         while True:
             camera.wait_recording(0.05)
